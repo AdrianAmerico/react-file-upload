@@ -1,8 +1,12 @@
 import React from 'react'
 import Dropzone from 'react-dropzone'
+import { IFile } from '../../types/types'
 import { DropContainer, UploadMessage } from './styles'
 
-export const Upload = ({ onUpload }: any) => {
+interface UploadProps {
+  onUpload: (files: IFile[]) => void
+}
+export const Upload = ({ onUpload }: UploadProps) => {
   const renderDragMessage = (isDragActive: boolean, isDragReject: boolean) => {
     if (!isDragActive) {
       return <UploadMessage type="default">Arraste arquivos aqui...</UploadMessage>
@@ -17,12 +21,13 @@ export const Upload = ({ onUpload }: any) => {
 
   return (
     <div>
-      <Dropzone accept="image/*" onDrop={(acceptedFiles) => onUpload(acceptedFiles)}>
+      <Dropzone accept="text/csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onDrop={(acceptedFiles: any) => onUpload(acceptedFiles)}>
         {({ getRootProps, getInputProps, isDragActive, isDragReject }) => (
           <DropContainer
             {...getRootProps()}
             isDragActive={isDragActive}
             isDragReject={isDragReject}
+            className="dropzone"
           >
             <input {...getInputProps()} />
             {renderDragMessage(isDragActive, isDragReject)}
