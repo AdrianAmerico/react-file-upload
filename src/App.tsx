@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react'
 import { FileList } from './components/FileList'
 import { Upload } from './components/Upload'
@@ -6,14 +7,14 @@ import { AppContainer, Content } from './styles/styles'
 import { uniqueId } from 'lodash'
 import filesize from 'filesize'
 import api from './services/api'
+import { FileData, FullFileData, IFile } from './types/types'
 
 const App = () => {
-  const [uploadedFiles, setUploadedFiles] = React.useState<any[]>([])
+  const [uploadedFiles, setUploadedFiles] = React.useState<FullFileData[]>([])
 
   const updateFile = (id: string, data: any) => {
-    console.log('de novo', id, data)
     if (!data.error) {
-      const fileUpdated = uploadedFiles.map((uploadedFile: any) => {
+      const fileUpdated = uploadedFiles.map((uploadedFile) => {
         return id === uploadedFile.id
           ? { ...uploadedFile, ...data }
           : uploadedFile
@@ -23,16 +24,15 @@ const App = () => {
     }
   }
 
-  const processUpload = (uploadedFile: any) => {
+  const processUpload = (uploadedFile: FileData) => {
     const data = new FormData()
 
-    data.append('file', uploadedFile.file, uploadedFile.name)
+    data.append('file', (uploadedFile.file) as any, uploadedFile.name)
 
     api
       .post('posts', data, {
         onUploadProgress: e => {
           const progress = parseInt(String(Math.round((e.loaded * 100) / e.total)))
-
           updateFile(uploadedFile.id, {
             progress
           })
@@ -52,43 +52,48 @@ const App = () => {
       })
   }
 
-  const handleUpload = (files: any) => {
-    const uploadedFiles = files.map((file: any) => ({
+  const handleUpload = (files: IFile[]) => {
+    const uploadedFiles = files.map((file) => ({
       file,
       id: uniqueId(),
       name: file.name,
       readableSize: filesize(file.size),
-      preview: URL.createObjectURL(file),
       progress: 0,
       uploaded: false,
       error: false,
-      url: null
+      url: ''
     }))
 
     setUploadedFiles(uploadedFiles)
-
-    uploadedFiles.forEach(processUpload)
   }
 
   const handleDelete = async (id: string) => {
     await api.delete(`posts/${id}`)
-    const values = uploadedFiles.filter((file: any) => file.id !== id)
+    const values = uploadedFiles.filter((file) => file.id !== id)
     setUploadedFiles(values)
+  }
+
+  const onSubmitForm = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    uploadedFiles.forEach(processUpload)
   }
 
   React.useEffect(() => {
     return () => {
-      uploadedFiles.forEach((file: any) => [URL.revokeObjectURL(file.preview)])
+      uploadedFiles.forEach((file) => [URL.revokeObjectURL(file.name)])
     }
   }, [])
 
   return (
     <AppContainer>
       <Content>
-        <Upload onUpload={handleUpload} />
-        {!!uploadedFiles.length && (
-          <FileList files={uploadedFiles} onDelete={handleDelete} />
-        )}
+        <form onSubmit={onSubmitForm}>
+          <Upload onUpload={handleUpload} />
+          {!!uploadedFiles.length && (
+            <FileList files={uploadedFiles} onDelete={handleDelete} />
+          )}
+          <button type="submit">subir</button>
+        </form>
       </Content>
       <GlobalStyle />
     </AppContainer>
